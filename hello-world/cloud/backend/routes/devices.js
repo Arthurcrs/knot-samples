@@ -1,6 +1,7 @@
 const express = require('express');
 const _ = require('lodash');
 const KNoTCloud = require('knot-cloud');
+const { defaultConfig } = require('./default');
 
 const router = express.Router();
 
@@ -15,6 +16,26 @@ async function getOnlineDevicesWithData(cloud, devices) {
     })
     .value();
   return (Promise.all(onlineDevices));
+}
+
+async function setDefaultConfig(cloud, devices) {
+  const devicesWithConfig = devices.map(async (device) => {
+    const defaultFlag = defaultConfig.flagChange * cloud.EventFlags.change
+      + defaultConfig.flagTime * cloud.EventFlags.time;
+    if (device.hasOwnProperty('config') === false) {
+      await cloud.setConfig(device.id,
+        [
+          {
+            sensorid: device.schema[0].sensor_id,
+            eventFlags: defaultFlag,
+            time: parseInt(defaultConfig.time, 10)
+          }
+        ]);
+      return device;
+    }
+    return device;
+  });
+  return Promise.all(devicesWithConfig);
 }
 
 router.get('/', async (req, res) => {
@@ -33,12 +54,42 @@ router.get('/', async (req, res) => {
   try {
     await cloud.connect();
     const devices = await cloud.getDevices();
-    const onlineDevices = await getOnlineDevicesWithData(cloud, devices);
+    let onlineDevices = await getOnlineDevicesWithData(cloud, devices);
+    onlineDevices = await setDefaultConfig(cloud, onlineDevices);
     res.status(200).send(onlineDevices);
   } catch (err) {
     res.status(500).send(err);
   } finally {
     await cloud.close();
+  }
+});
+
+router.put('/:deviceId/config', async (req, res) => {
+  const meshbluHost = req.get('Meshblu-Host');
+  const meshbluPort = parseInt(req.get('Meshblu-Port'), 10);
+  const meshbluAuthUUID = req.get('Meshblu-Auth-UUID');
+  const meshbluAuthToken = req.get('Meshblu-Auth-Token');
+  const { deviceId } = req.params;
+  const {
+    sensorid, flagChange, flagTime, time
+  } = req.body.data;
+  const cloud = new KNoTCloud(meshbluHost, meshbluPort, meshbluAuthUUID, meshbluAuthToken);
+  const eventFlags = flagChange * cloud.EventFlags.change + flagTime * cloud.EventFlags.time;
+  try {
+    await cloud.connect();
+    await cloud.setConfig(deviceId,
+      [
+        {
+          sensorid,
+          eventFlags,
+          time: parseInt(time, 10)
+        }
+      ]);
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send(err);
+  } finally {
+    await cloud.close;
   }
 });
 
