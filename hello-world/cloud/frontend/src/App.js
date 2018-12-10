@@ -8,6 +8,8 @@ import openSocket from 'socket.io-client';
 
 const meshbluDefaultHost = meshbluDefault.host;
 const meshbluDefaultPort = meshbluDefault.port;
+const defaultFlagTime = 30;
+const defaultFlagChange = true;
 
 class App extends Component {
   constructor() {
@@ -18,6 +20,7 @@ class App extends Component {
     this.getDevices = this.getDevices.bind(this);
     this.switchStatus = this.switchStatus.bind(this);
     this.updateDevice = this.updateDevice.bind(this);
+    this.deviceConfig = this.deviceConfig.bind(this);
   }
 
   getDevices() {
@@ -114,23 +117,85 @@ class App extends Component {
       });
   }
 
+  deviceConfig(deviceId) {
+    const { flag_time, flag_change } = this.state;
+    axios
+      .get(`/devices/${deviceId}/config`, {
+        headers: {
+          'Flag-Time': flag_time || defaultFlagTime,
+          'Flag-Change': flag_change || defaultFlagChange,
+        },
+      })
+      .then(() => {
+        window.alert('Device Configured!');
+      })
+      .catch(error => {
+        window.alert(`An error occured. Check the information provided and try again. ${error}.`);
+      });
+  }
+
   createDeviceCard(device) {
     return (
-      <div className="online-device" id={device.id} key={device.id}>
-        <div className="device-info">
-          <div className="device-name">
-            {device.name}
-          </div>
-          <div className="device-id">
-            {device.id}
-          </div>
+      <div className="online-device-card" id={device.id} key={device.id}>
+        <div className="device-card-collumn">
+          <label className="device-card-label-text">NAME</label>
+          <div className="device-card-info-text">{device.name}</div>
+          <label className="device-card-label-text">ID</label>
+          <div className="device-card-info-text">{device.id}</div>
         </div>
-        <div className="device-value">
-          {device.value ? <Icon name="lightbulb outline" color="yellow" size="massive" /> : <Icon name="lightbulb" color="black" size="massive" />}
+        <div className="device-card-collumn">
+          <label htmlFor="flag_time" className="device-card-label-text">
+            UPDATE EVERY (SEC)
+            <input
+              type="text"
+              id="flag_time"
+              placeholder={defaultFlagTime}
+              className="device-card-info-text"
+              onChange={e => this.setState({ flag_time: e.target.value })}
+            />
+          </label>
+
+          <label htmlFor="flag_change" className="device-card-label-text">
+            UPDATE ON CHANGE
+            <label className="switch-slider">
+              <input
+                type="checkbox"
+                defaultChecked
+                id="flag_change"
+                onChange={e => this.setState({ flag_change: e.target.checked })}
+              />
+              <span className="slider round"></span>
+            </label>
+          </label>
+
+          <button
+            type="button"
+            className="device-card-button"
+            onClick={() =>
+              this.deviceConfig(device.id)
+            }
+          >
+            CONFIGURE
+          </button>
         </div>
-        <button type="button" className="switch" onClick={() => this.switchStatus(device.id, device.sensorid, device.value)}>
-              CHANGE VALUE
-        </button>
+        <div className="device-card-collumn">
+          <div className="device-card-icon">
+            {device.value ? (
+              <Icon name="lightbulb outline" color="yellow" size="massive" />
+            ) : (
+                <Icon name="lightbulb" color="black" size="massive" />
+              )}
+          </div>
+          <button
+            type="button"
+            className="device-card-button"
+            onClick={() =>
+              this.switchStatus(device.id, device.sensorid, device.value)
+            }
+          >
+            CHANGE VALUE
+          </button>
+        </div>
       </div>
     );
   }
