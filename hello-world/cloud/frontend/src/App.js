@@ -2,12 +2,14 @@ import React, { Component } from 'react';
 import './App.css';
 import _ from 'lodash';
 import { Icon } from 'semantic-ui-react';
-import axios from 'axios'
-import { meshbluDefault, backendDefault } from './config';
+import axios from 'axios';
 import openSocket from 'socket.io-client';
+import { meshbluDefault, backendDefault, defaultFlags } from './config';
 
 const meshbluDefaultHost = meshbluDefault.host;
 const meshbluDefaultPort = meshbluDefault.port;
+const defaultFlagTime = defaultFlags.flagTime;
+const defaultFlagChange = defaultFlags.flagChange;
 
 class App extends Component {
   constructor() {
@@ -18,6 +20,8 @@ class App extends Component {
     this.getDevices = this.getDevices.bind(this);
     this.switchStatus = this.switchStatus.bind(this);
     this.updateDevice = this.updateDevice.bind(this);
+    this.deviceConfig = this.deviceConfig.bind(this);
+    this.state = { flagChange: defaultFlagChange };
   }
 
   getDevices() {
@@ -114,23 +118,91 @@ class App extends Component {
       });
   }
 
+  deviceConfig(deviceId) {
+    const { uuid } = this.state;
+    const { token } = this.state;
+    const { host } = this.state;
+    const { port } = this.state;
+    const { flagTime, flagChange } = this.state;
+    axios
+      .get(`/devices/${deviceId}/config`, {
+        headers: {
+          'Flag-Time': flagTime || defaultFlagTime,
+          'Flag-Change': flagChange,
+          'Meshblu-Host': host || meshbluDefaultHost,
+          'Meshblu-Port': port || meshbluDefaultPort,
+          'Meshblu-Auth-UUID': uuid,
+          'Meshblu-Auth-Token': token
+        }
+      })
+      .then(() => {
+        // eslint-disable-next-line no-alert
+        window.alert('Device Configured!');
+      })
+      .catch((error) => {
+        // eslint-disable-next-line no-alert
+        window.alert(`An error occured. Check the information provided and try again. ${error}.`);
+      });
+  }
+
   createDeviceCard(device) {
     return (
-      <div className="online-device" id={device.id} key={device.id}>
-        <div className="device-info">
-          <div className="device-name">
-            {device.name}
-          </div>
-          <div className="device-id">
-            {device.id}
-          </div>
+      <div className="device-card">
+        <div className="device-card-column">
+          <div className="device-card-label-text">NAME</div>
+          <div className="device-card-info-text">{device.name}</div>
+          <div className="device-card-label-text">ID</div>
+          <div className="device-card-info-text">{device.id}</div>
         </div>
-        <div className="device-value">
-          {device.value ? <Icon name="lightbulb outline" color="yellow" size="massive" /> : <Icon name="lightbulb" color="black" size="massive" />}
+        <div className="device-card-column">
+          <label htmlFor="flagTime" className="device-card-label-text">
+            UPDATE EVERY (SEC)
+            <input
+              type="text"
+              id="flagTime"
+              placeholder={defaultFlagTime}
+              className="device-card-info-text"
+              onChange={e => this.setState({ flagTime: e.target.value })}
+            />
+          </label>
+          <label htmlFor="flagChange" className="device-card-label-text">
+            UPDATE ON CHANGE
+            <label className="switch-slider" htmlFor="flagChange">
+              <input
+                type="checkbox"
+                id="flagChange"
+                defaultChecked={defaultFlagChange}
+                onChange={e => this.setState({ flagChange: e.target.checked })}
+              />
+              <span className="slider round" />
+            </label>
+          </label>
+          <button
+            type="button"
+            className="device-card-button"
+            onClick={() => this.deviceConfig(device.id)
+            }
+          >
+            CONFIGURE
+          </button>
         </div>
-        <button type="button" className="switch" onClick={() => this.switchStatus(device.id, device.sensorid, device.value)}>
-              CHANGE VALUE
-        </button>
+        <div className="device-card-column">
+          <div className="device-card-icon">
+            {device.value ? (
+              <Icon name="lightbulb outline" color="yellow" size="massive" />
+            ) : (
+              <Icon name="lightbulb" color="black" size="massive" />
+            )}
+          </div>
+          <button
+            type="button"
+            className="device-card-button"
+            onClick={() => this.switchStatus(device.id, device.sensorid, device.value)
+            }
+          >
+            CHANGE VALUE
+          </button>
+        </div>
       </div>
     );
   }
