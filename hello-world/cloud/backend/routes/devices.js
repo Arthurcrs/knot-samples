@@ -17,6 +17,27 @@ async function getOnlineDevicesWithData(cloud, devices) {
   return (Promise.all(onlineDevices));
 }
 
+router.get('/:deviceId/config', async (req, res) => {
+  const meshbluHost = req.get('Meshblu-Host');
+  const meshbluPort = parseInt(req.get('Meshblu-Port'), 10);
+  const meshbluAuthUUID = req.get('Meshblu-Auth-UUID');
+  const meshbluAuthToken = req.get('Meshblu-Auth-Token');
+  const { deviceId } = req.params;
+  const flagTime = req.get('Flag-Time');
+  const flagChange = req.get('Flag-Change');
+
+  const cloud = new KNoTCloud(meshbluHost, meshbluPort, meshbluAuthUUID, meshbluAuthToken);
+  try {
+    await cloud.connect();
+    await cloud.setMetadata(deviceId, { flag_time: flagTime, flag_change: flagChange });
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send(err);
+  } finally {
+    await cloud.close;
+  }
+});
+
 router.get('/', async (req, res) => {
   const meshbluHost = req.get('Meshblu-Host');
   const meshbluPort = parseInt(req.get('Meshblu-Port'), 10);
