@@ -42,6 +42,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.put('/:deviceId/config', async (req, res) => {
+  const meshbluHost = req.get('Meshblu-Host');
+  const meshbluPort = parseInt(req.get('Meshblu-Port'), 10);
+  const meshbluAuthUUID = req.get('Meshblu-Auth-UUID');
+  const meshbluAuthToken = req.get('Meshblu-Auth-Token');
+  const { deviceId } = req.params;
+  const {
+    sensorid, flagChange, flagTime, time
+  } = req.body.data;
+  const cloud = new KNoTCloud(meshbluHost, meshbluPort, meshbluAuthUUID, meshbluAuthToken);
+  const eventFlags = flagChange * cloud.EventFlags.change + flagTime * cloud.EventFlags.time;
+  try {
+    await cloud.connect();
+    await cloud.setConfig(deviceId,
+      [
+        {
+          sensorid,
+          eventFlags,
+          time: parseInt(time, 10)
+        }
+      ]);
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send(err);
+  } finally {
+    await cloud.close;
+  }
+});
+
 router.put('/:deviceId/sensors/:sensorId', async (req, res) => {
   const meshbluHost = req.get('Meshblu-Host');
   const meshbluPort = req.get('Meshblu-Port');
