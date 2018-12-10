@@ -10,4 +10,9 @@ config.backendDefault = {
   port: '3002'
 };
 
+config.defaultFlag = {
+  time: 30,
+  change: true
+};
+
 module.exports = config;
