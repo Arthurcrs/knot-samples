@@ -1,7 +1,6 @@
 const express = require('express');
 const _ = require('lodash');
 const KNoTCloud = require('knot-cloud');
-
 const router = express.Router();
 
 async function getOnlineDevicesWithData(cloud, devices) {
@@ -16,6 +15,23 @@ async function getOnlineDevicesWithData(cloud, devices) {
     .value();
   return (Promise.all(onlineDevices));
 }
+
+router.get('/:deviceId/config',async (req,res) => {
+  const { deviceId } = req.params;
+  const flagTime = req.get('Flag-Time');
+  const flagChange  = req.get('Flag-Change');
+  
+  console.log(deviceId); 
+  console.log(flagTime);
+  console.log(flagChange);  
+
+  try {
+    res.status(200).send();
+  } catch (err) {
+    res.status(500).send(err);
+  } finally {
+  }
+});
 
 router.get('/', async (req, res) => {
   const meshbluHost = req.get('Meshblu-Host');
