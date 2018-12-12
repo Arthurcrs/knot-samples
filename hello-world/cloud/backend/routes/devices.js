@@ -4,7 +4,7 @@ const KNoTCloud = require('knot-cloud');
 const router = express.Router();
 
 async function getOnlineDevicesWithData(cloud, devices) {
-  const onlineDevices = _.chain(devices)
+  const onlineDevices =  _.chain(devices)
     .filter('online')
     .map(async (device) => {
       const data = await cloud.getData(device.id);
@@ -20,7 +20,7 @@ router.get('/:deviceId/config',async (req,res) => {
   const { deviceId } = req.params;
   const flagTime = req.get('Flag-Time');
   const flagChange  = req.get('Flag-Change');
-  
+
   console.log(deviceId); 
   console.log(flagTime);
   console.log(flagChange);  
