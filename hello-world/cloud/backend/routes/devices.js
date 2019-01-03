@@ -22,18 +22,21 @@ router.get('/', async (req, res) => {
   const meshbluPort = parseInt(req.get('Meshblu-Port'), 10);
   const meshbluAuthUUID = req.get('Meshblu-Auth-UUID');
   const meshbluAuthToken = req.get('Meshblu-Auth-Token');
-
+/*
   const cloud = new KNoTCloud(
     meshbluHost,
     meshbluPort,
     meshbluAuthUUID,
     meshbluAuthToken
   );
+*/
 
   try {
-    await cloud.connect();
-    const devices = await cloud.getDevices();
-    const onlineDevices = await getOnlineDevicesWithData(cloud, devices);
+    // await cloud.connect();
+    // const devices = await cloud.getDevices();
+    // const onlineDevices = await getOnlineDevicesWithData(cloud, devices);
+    
+    var onlineDevices = [ {name : 'thing-name' , id : 'thing-id', value : true} ]; 
     res.status(200).send(onlineDevices);
   } catch (err) {
     res.status(500).send(err);

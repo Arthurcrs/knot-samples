@@ -35,7 +35,7 @@ class App extends Component {
     this.setState({
       socket
     });
-
+    /*
     if (!uuid) {
       window.alert('UUID is mandatory'); // eslint-disable-line no-alert
       return;
@@ -44,6 +44,7 @@ class App extends Component {
       window.alert('TOKEN is mandatory'); // eslint-disable-line no-alert
       return;
     }
+    */
 
     axios.get('devices', {
       headers: {
